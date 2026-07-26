@@ -1,7 +1,7 @@
 ---
 name: design
 description: Interactive design reasoning and .pen file creation using Pencil
-argument-hint: <ticket-id | design description> [additional context]
+argument-hint: [--mobbin] <ticket-id | design description> [additional context]
 user-invocable: true
 disable-model-invocation: true
 model: opus

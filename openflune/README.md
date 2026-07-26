@@ -9,7 +9,7 @@ Ticket refinement and automated implementation pipeline for GitHub.
 | `/openflune:configure` | Interactive project setup: tech stack, sandboxing, MCP/LSP servers |
 | `/openflune:refine <ticket-id>` | Iterative ticket refinement until it's ready for planning |
 | `/openflune:design [--mobbin] <ticket-id \| description>` | Interactive design reasoning and `.pen` file creation using Pencil. Add `--mobbin` to pull real-world UI references from Mobbin first (paid Mobbin plan; opt-in) |
-| `/openflune:implement <ticket-id>` | Full pipeline: plan, test, implement, refactor, security review, code review, lessons, PR |
+| `/openflune:implement [--mobbin] <ticket-id \| description>` | Full pipeline: plan, test, implement, refactor, security review, code review, lessons, PR. Add `--mobbin` to skip the manual design phase but ground UI work in real-world Mobbin references (paid Mobbin plan; opt-in) |
 | `/openflune:address-review <pr-number>` | Address PR review comments — fetch, evaluate, fix, reply, push, re-request review |
 | `/openflune:sync` | Pull latest main, rebase active worktrees, prune stale remotes, clean up merged branches |
 
@@ -85,6 +85,8 @@ claude
 
 # 5. Implement a ticket
 /openflune:implement 12345
+#    ...or skip the design phase but still ground the UI in real-world references:
+/openflune:implement --mobbin 12345
 ```
 
 ## Working from your phone
@@ -184,7 +186,7 @@ Lessons are routed by topic (`docs/caching.md`, `docs/migrations.md`, …) rathe
 
 ## Implementation Pipeline
 
-When you run `/openflune:implement <ticket-id>`, the pipeline executes these phases:
+When you run `/openflune:implement <ticket-id>`, the pipeline executes these phases. With `--mobbin`, an opt-in Mobbin reference-gathering step runs before Plan and the selected references are persisted in the plan file (see [`docs/mobbin.md`](docs/mobbin.md)).
 
 1. **Plan** — Context-gatherer agent bundles the ticket, design, and project context into a file (only a short digest enters the main context); planner agent reads the bundle, analyzes the codebase, and proposes an implementation plan (waits for your approval).
 2. **Worktree Setup** — Creates an isolated git worktree for the feature branch
@@ -255,7 +257,7 @@ The plugin uses specialized agents with isolated contexts:
 
 **Model tiering**: Opus where judgment is concentrated — `/openflune:refine` and `/openflune:design` pin `model: opus` because scope, acceptance criteria, splits, and UX structure drive everything downstream. Sonnet for pipeline orchestration and implementation (`/openflune:implement` pins `model: sonnet`). Haiku for mechanical collection (lessons-collector). These pins are visible in each skill's frontmatter and override the session model for that skill only.
 
-External integrations use the `gh` CLI rather than MCP servers, keeping permissions simple and avoiding token overhead. Optional MCP servers: Context7 (live documentation lookup), Pencil (design file creation via `/openflune:design`), and Mobbin (real-world UI references via `/openflune:design --mobbin` — a paid, OAuth-gated remote server that is fully opt-in and never bundled). See [`docs/mobbin.md`](docs/mobbin.md).
+External integrations use the `gh` CLI rather than MCP servers, keeping permissions simple and avoiding token overhead. Optional MCP servers: Context7 (live documentation lookup), Pencil (design file creation via `/openflune:design`), and Mobbin (real-world UI references via `--mobbin` on `/openflune:design` or `/openflune:implement` — a paid, OAuth-gated remote server that is fully opt-in and never bundled). See [`docs/mobbin.md`](docs/mobbin.md).
 
 ## Known Limitations
 

@@ -6,8 +6,8 @@ Read this file only when Phase 1 starts.
 
 If `hasPlanFile` is true, skip new planning:
 
-1. The plan file was already read and parsed during mode detection. Source ticket details, user context, Q&A, implementation plan, architectural context, design context, and attachment summaries from it.
-2. Compare `planCommitSha` from front matter to `git rev-parse HEAD`. If they differ, warn: "The codebase has changed since this plan was created (`planCommitSha` vs current HEAD). The plan may be stale. Continue anyway?" Use `AskUserQuestion` with "Continue with existing plan" and "Re-plan from scratch". If re-planning, delete the plan file and run normal planning.
+1. The plan file was already read and parsed during mode detection. Source ticket details, user context, Q&A, implementation plan, architectural context, design context, design references (Mobbin), and attachment summaries from it.
+2. Compare `planCommitSha` from front matter to `git rev-parse HEAD`. If they differ, warn: "The codebase has changed since this plan was created (`planCommitSha` vs current HEAD). The plan may be stale. Continue anyway?" Use `AskUserQuestion` with "Continue with existing plan" and "Re-plan from scratch". If re-planning, delete the plan file and run normal planning; if the deleted plan had `mobbin: true`, keep `$MOBBIN_MODE = true` and run the Mobbin Reference Gathering step (read `../mobbin-references.md`) before the planner delegation.
 3. In ticket mode, re-fetch the ticket and compare state/body with `## Ticket Details`. If changed, warn the user and require confirmation before continuing. (This single read-only `gh issue view` is the sanctioned exception to the "no ticket fetch in the main agent" rule — it runs after the pre-flight check, and the context-gatherer is not used in plan file mode.)
 4. Proceed to Phase 2 with context from the plan file.
 
@@ -60,6 +60,7 @@ In both modes, tell the planner:
 - Read relevant `docs/<topic>.md` files on demand, not all docs.
 - Read legacy `.claude/rules/lessons-learned*.md` only if present.
 - Ask at most 6 clarifying questions, only where answers would change the plan.
+- If `$MOBBIN_REFERENCES` is non-empty, pass the references inline (app/screen name, pattern note, link — they are a handful of compact bullets, the justified exception to by-path passing) and require the plan to ground UI structure, navigation, and state handling in those patterns, with a short mapping of which reference informs which screen/component.
 
 Question categories to evaluate: scope boundaries, edge cases, error handling, performance, backward compatibility, and integration points.
 
@@ -103,7 +104,7 @@ After approval, create `.plans/` and assemble:
 
 **Assemble, don't re-emit.** Write the plan file in two steps so bundle content never passes through the main context again:
 
-1. `Write` the plan file with the YAML front matter and only the sections the main agent owns: `## User Context`, `## Q&A from Planning`, `## Implementation Plan`, `## Architectural Context`, `## Attachment Summaries`.
+1. `Write` the plan file with the YAML front matter and only the sections the main agent owns: `## User Context`, `## Q&A from Planning`, `## Implementation Plan`, `## Architectural Context`, `## Attachment Summaries`, and — when `$MOBBIN_REFERENCES` is non-empty — `## Design References (Mobbin)`.
 2. Append the context bundle verbatim via shell: `cat /tmp/claude/openflune-context-<id|slug>.md >> .plans/<filename>` — this contributes `## Ticket Details`, `## Design Context`, and `## Project Context`.
 
 If no bundle exists (ticketless mode without a gatherer run), write `## Ticket Details` with the task description and `## Design Context` with "N/A" directly in step 1.
@@ -125,6 +126,7 @@ parentId: null
 createdAt: 2026-03-04T10:30:00Z
 status: approved
 planCommitSha: abc123def
+mobbin: true
 ---
 
 ## Ticket Details
@@ -145,6 +147,9 @@ planCommitSha: abc123def
 ## Design Context
 <DESIGN.md content or .pen path, or "N/A">
 
+## Design References (Mobbin)
+- [<app / screen name>](<mobbin link>) — <pattern it informed>
+
 ## Project Context
 <per-project CLAUDE.md content for affected projects (monorepo only) — section may be absent>
 
@@ -153,6 +158,8 @@ planCommitSha: abc123def
 ```
 
 Record `planCommitSha` from `git rev-parse HEAD`. Source `isChild`, `isLastChild`, and `parentId` from the context-gatherer digest stored earlier in this session. For ticketless mode, omit ticket fields.
+
+The `mobbin` front matter field and the `## Design References (Mobbin)` section are present only when `--mobbin` was used and the user selected at least one reference; omit both otherwise. Plan-file mode reads them at mode detection; Phases 3–4 pass the section to the implementer.
 
 After writing the plan file, the **only remaining action** is the final message below — no other tool calls, and never read `phases/phase-2-worktree.md` or any later phase file in this session. The session that created a plan always ends here; implementation runs in a fresh session.
 

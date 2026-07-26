@@ -14,6 +14,6 @@ GitHub Issues for tracking. GitHub for code and PRs.
 ## Reference Docs
 On-demand topic docs live at `docs/`:
 - `docs/git-workflow.md` — branching, commits, PRs, versioning
-- `docs/mobbin.md` — Mobbin design-reference MCP: setup, auth, rate limits, prompting (read before working on `--mobbin` design flows)
+- `docs/mobbin.md` — Mobbin design-reference MCP: setup, auth, rate limits, prompting (read before working on any `--mobbin` flow)
 
 `.claude/rules/` is reserved for files explicitly `@`-imported by this CLAUDE.md (auto-loaded at session start). It is not used today.
