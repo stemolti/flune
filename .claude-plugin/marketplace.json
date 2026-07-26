@@ -1,5 +1,5 @@
 {
-  "name": "flune-tools",
+  "name": "flune",
   "owner": {
     "name": "Tete Stefano Agbodan"
   },
@@ -12,7 +12,7 @@
       "author": {
         "name": "Tete Stefano Agbodan"
       },
-      "repository": "https://github.com/stemolti/flune-tools"
+      "repository": "https://github.com/stemolti/flune"
     }
   ]
 }
