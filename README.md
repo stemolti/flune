@@ -1,4 +1,4 @@
-# flune-tools
+# flune
 
 Claude Code plugins and tooling.
 
@@ -9,7 +9,7 @@ Claude Code plugins and tooling.
 Ticket refinement and automated implementation pipeline for GitHub. Provides skills for planning, TDD implementation, code review, and PR creation.
 
 ```bash
-claude plugin marketplace add stemolti/flune-tools
+claude plugin marketplace add stemolti/flune
 claude plugin install openflune
 ```
 

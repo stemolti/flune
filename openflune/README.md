@@ -52,7 +52,7 @@ macOS sandbox support is built into Claude Code and requires no extra packages.
 
 ```bash
 # Register the repo as a marketplace (works with private repos too)
-claude plugin marketplace add stemolti/flune-tools
+claude plugin marketplace add stemolti/flune
 
 # Install the plugin (persists across sessions)
 claude plugin install openflune
