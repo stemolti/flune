@@ -1,14 +1,29 @@
 ---
 name: implement
 description: Full implementation pipeline — plan, test, implement, review, PR
-argument-hint: <ticket-id | task description> [additional context]
+argument-hint: [--mobbin] <ticket-id | task description> [additional context]
 user-invocable: true
 disable-model-invocation: true
 model: sonnet
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Task, AskUserQuestion, mcp__context7, mcp__pencil__batch_get, mcp__pencil__get_variables, mcp__pencil__get_screenshot, mcp__pencil__snapshot_layout, mcp__pencil__get_editor_state
+allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Task, AskUserQuestion, mcp__context7, mcp__pencil__batch_get, mcp__pencil__get_variables, mcp__pencil__get_screenshot, mcp__pencil__snapshot_layout, mcp__pencil__get_editor_state, mcp__mobbin
 ---
 
 Read the `subagent-safety` reference skill before delegating work to subagents.
+
+<!-- Mobbin note: the optional `--mobbin` flag lets a user SKIP the manual design phase
+     (/openflune:design, Pencil, DESIGN.md) while still grounding UI/UX in real-world,
+     shipped patterns from Mobbin's MCP server. Reference gathering runs in the MAIN agent
+     (subagents have no MCP tools; AskUserQuestion is main-agent-only), before Phase 1, so
+     the plan itself is grounded in the references. Because a new-plan session always ends
+     at Phase 1, the selected references are persisted into the plan file (front matter
+     `mobbin: true` + a `## Design References (Mobbin)` section) and inherited by the
+     implementation session — no Mobbin calls happen in plan-file mode. Mobbin is a PAID
+     (Pro/Team/Enterprise), OAuth-authenticated remote MCP server, so it is NEVER bundled
+     or always-on: users opt in per project via `mobbin.enabled` in `.claude/config.json`
+     (set by /openflune:configure) and per invocation via `--mobbin`. The server is granted
+     at server level (`mcp__mobbin` in allowed-tools) because Mobbin does not publish stable
+     tool names — tools are discovered at runtime. Gating is on `mobbin.enabled` only,
+     independent of `pencil.enabled`. See `docs/mobbin.md`. -->
 
 ## Context
 
@@ -57,9 +72,19 @@ If `pencil.enabled` is not `true` or `pencil` is absent, skip this section.
 
 **Shell rules**: Read the `shell-rules` skill before generating any shell in this pipeline — it covers the heredoc temp-file pattern, zsh-safe portability (no bash associative arrays), and the rule against `cd <dir> && …` compounds and hand-rescuing stranded worktree edits.
 
+**Parse `$ARGUMENTS` — Flag Detection:**
+
+Before mode detection, check for the optional `--mobbin` flag:
+
+- If the **first whitespace-delimited token** of `$ARGUMENTS` is `--mobbin`, set `$MOBBIN_MODE = true`, **strip that token**, and continue parsing the remaining string as usual. Otherwise set `$MOBBIN_MODE = false`.
+- Examples: `--mobbin 42` → `$MOBBIN_MODE = true`, remaining `42`; `--mobbin add dark-mode toggle` → `$MOBBIN_MODE = true`, remaining `add dark-mode toggle`; `42` → `$MOBBIN_MODE = false`, remaining `42`.
+- **Plan-file exception**: if the remaining first token resolves to plan file mode, the flag is redundant — Mobbin state is inherited from the plan file's front matter (see plan file mode below). Tell the user the flag is ignored and proceed.
+
+When `$MOBBIN_MODE` is `true` (and this is not plan file mode), the Mobbin Reference Gathering step runs after Ticket Readiness. When it is `false`, that step is skipped entirely and no Mobbin call is ever made.
+
 **Parse `$ARGUMENTS` — Mode Detection:**
 
-Extract the first whitespace-delimited token from `$ARGUMENTS` and determine the mode:
+Using the string **after** the `--mobbin` flag has been stripped, extract the first whitespace-delimited token and determine the mode:
 
 - **If the first token matches `^\d+$` or `^#\d+$`** → **ticket mode**
   - Strip any `#` prefix to get the numeric ticket ID.
@@ -67,10 +92,11 @@ Extract the first whitespace-delimited token from `$ARGUMENTS` and determine the
   - Examples: `#1 focus on API` → ID `1`, context `focus on API`; `7` → ID `7`, no context.
 
 - **If the first token ends in `.md` and resolves to a file in `.plans/`** → **plan file mode**
-  - Read the plan file. Parse the YAML front matter (between `---` delimiters) to extract metadata: `version`, `mode`, `ticketId`, `ticketTitle`, `slug`, `isChild`, `isLastChild`, `parentId`, `planCommitSha`, `createdAt`, `status`.
+  - Read the plan file. Parse the YAML front matter (between `---` delimiters) to extract metadata: `version`, `mode`, `ticketId`, `ticketTitle`, `slug`, `isChild`, `isLastChild`, `parentId`, `planCommitSha`, `createdAt`, `status`, `mobbin`.
   - Set `hasPlanFile = true`.
   - Inherit the original mode (`ticket` or `ticketless`) from the front matter's `mode` field.
   - If `mode` is `ticket`, set the ticket ID and slug from front matter. If `mode` is `ticketless`, set the slug from front matter.
+  - If the front matter has `mobbin: true`, set `$MOBBIN_MODE = true` and load the plan file's `## Design References (Mobbin)` section as `$MOBBIN_REFERENCES`. Plan-file mode never queries Mobbin — the references were selected when the plan was created.
   - The rest of `$ARGUMENTS` after the file path is ignored.
 
 - **Otherwise** → **ticketless mode**
@@ -188,6 +214,8 @@ If the user says no → stop. If yes → proceed with the pipeline.
 
 ### Design Check (soft)
 
+If `$MOBBIN_MODE` is `true`, skip this check entirely — the user explicitly chose to skip the manual design phase and ground the implementation in Mobbin references instead.
+
 If the ticket is classified as frontend — its title or the digest summary mention UI components, pages, views, layouts, forms, modals, visual design, styling, CSS, animations, themes, or frontend frameworks (React, Angular, Vue, Svelte, etc.) — and does **not** have a "Designed" label/tag **and** the digest reports no design (`design: none`), display a suggestion:
 > "This frontend ticket hasn't been designed yet. Consider running `/openflune:design <ticket-id>` first for a visual reference. Do you want to proceed anyway?"
 
@@ -201,6 +229,12 @@ If the ticket has a `ui:visual-check` or `Browser` label, display a reminder:
 > "This ticket has the `ui:visual-check` label. Ensure `playwright-cli` is available for visual verification (`playwright-cli screenshot`, `playwright-cli snapshot`)."
 
 This is informational only — it does not block the pipeline.
+
+## Mobbin Reference Gathering
+
+Run this step only if `$MOBBIN_MODE` is `true` **and** `hasPlanFile` is `false` (in plan file mode, `$MOBBIN_REFERENCES` was already loaded from the plan file during mode detection). It runs in both ticket and ticketless mode, and always in the **main agent** — subagents cannot use MCP tools or `AskUserQuestion`.
+
+Read `mobbin-references.md` (in this skill's directory) and follow Steps A–D. Store the user's selected references as `$MOBBIN_REFERENCES` — Phase 1 passes them to the planner and persists them in the plan file. If the user opts to continue without Mobbin, set `$MOBBIN_MODE = false` and proceed normally.
 
 ## Label "Working"
 

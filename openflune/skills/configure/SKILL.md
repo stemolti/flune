@@ -212,7 +212,7 @@ If no frontend framework is detected, skip this section entirely (do not set `mo
 
 5c. **Mobbin design references**: Present using AskUserQuestion:
 
-   "Do you want to enable Mobbin design references? When enabled, `/openflune:design --mobbin <ticket>` pulls real-world, shipped UI patterns from Mobbin's 600k+ screen library to ground the design.
+   "Do you want to enable Mobbin design references? When enabled, the `--mobbin` flag on `/openflune:design` or `/openflune:implement` pulls real-world, shipped UI patterns from Mobbin's 600k+ screen library to ground the design or implementation.
     Requires a **paid** Mobbin plan (Pro/Team/Enterprise) and one-time browser authentication. It is fully opt-in — nothing connects to Mobbin unless you pass `--mobbin`."
 
    Options: "Yes — enable Mobbin design references", "No — skip"
@@ -220,7 +220,7 @@ If no frontend framework is detected, skip this section entirely (do not set `mo
    - **If Yes** → write `mobbin: { enabled: true }` to `.claude/config.json`. Then tell the user how to connect the server (once per machine, user scope):
      "Enabled. Authenticate the Mobbin MCP server once with:
      `claude mcp add mobbin --scope user --transport http https://api.mobbin.com/mcp`
-     then run `/mcp` → **Authenticate** (a browser window opens to sign in to Mobbin). After it shows `mobbin: connected`, use `/openflune:design --mobbin <ticket>`."
+     then run `/mcp` → **Authenticate** (a browser window opens to sign in to Mobbin). After it shows `mobbin: connected`, use `--mobbin` with `/openflune:design` or `/openflune:implement`."
    - **If No** → omit `mobbin` from config (or, on re-configure, set `mobbin.enabled: false`).
 
 ### Playwright CLI Setup

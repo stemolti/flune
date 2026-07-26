@@ -2,10 +2,11 @@
 
 Mobbin's MCP server lets AI agents search 600k+ real-world, **shipped** UI screens and flows
 using natural language, so designs can be grounded in patterns that ship in production apps
-instead of invented from scratch. openflune uses it in `/openflune:design` behind an explicit
-`--mobbin` flag.
+instead of invented from scratch. openflune uses it in `/openflune:design` and
+`/openflune:implement` behind an explicit `--mobbin` flag.
 
 The `/openflune:design` skill reads this doc during **Phase 2.7 — Mobbin Reference Gathering**.
+The `/openflune:implement` skill reads it during its **Mobbin Reference Gathering** step.
 
 ## What it is
 
@@ -22,7 +23,7 @@ Because Mobbin is paid, OAuth-gated, and remote, openflune **never bundles it** 
 `.mcp.json` (that would prompt every user to authenticate). It is opt-in on two levels:
 
 1. **Per project** — `mobbin.enabled: true` in `.claude/config.json` (set by `/openflune:configure`).
-2. **Per invocation** — the `--mobbin` flag on `/openflune:design`.
+2. **Per invocation** — the `--mobbin` flag on `/openflune:design` or `/openflune:implement`.
 
 Both must be true for Mobbin to be queried. Without `--mobbin`, no Mobbin call is ever made.
 
@@ -40,9 +41,9 @@ Both must be true for Mobbin to be queried. Without `--mobbin`, no Mobbin call i
 ## Tool names are discovered at runtime
 
 Mobbin does **not** publish stable tool names (its docs are a JS SPA). openflune therefore
-grants the whole server — `mcp__mobbin` in the design skill's `allowed-tools` — and discovers
-the available tools with a probe call at the start of Phase 2.7. **Never hardcode Mobbin tool
-names** anywhere in skills or agents.
+grants the whole server — `mcp__mobbin` in the design and implement skills' `allowed-tools` —
+and discovers the available tools with a probe call at the start of each gathering step.
+**Never hardcode Mobbin tool names** anywhere in skills or agents.
 
 ## Prompting best practices
 
@@ -68,3 +69,26 @@ names** anywhere in skills or agents.
    guide still governs the visual aesthetic).
 5. **Phase 5.5** records a `## Design References (Mobbin)` section in `DESIGN.md`, so the
    downstream planner/implementer subagents see which real-world patterns the design followed.
+
+## How it flows through the implement skill
+
+Use `--mobbin` on `/openflune:implement` to skip the manual design phase entirely (no Pencil,
+no DESIGN.md) while still grounding the UI in shipped patterns.
+
+1. `/openflune:implement --mobbin <ticket | description>` sets `$MOBBIN_MODE = true`.
+2. After context gathering and ticket readiness, the **Mobbin Reference Gathering** step
+   (`skills/implement/mobbin-references.md`) gates on `mobbin.enabled`, verifies the server is
+   connected/authenticated, builds a query from the ticket digest (or task description) and the
+   configured stack, and lets the user pick references (`$MOBBIN_REFERENCES`). This happens in
+   the main agent — subagents have no MCP tools.
+3. **Phase 1** passes the references to the planner (the plan grounds UI structure in them) and
+   persists them into the plan file: `mobbin: true` in the front matter plus a
+   `## Design References (Mobbin)` section.
+4. The implementation session (`/openflune:implement .plans/<file>`) inherits the references
+   from the plan file — **no Mobbin calls are made in plan-file mode**, so the fresh session
+   needs no Mobbin auth.
+5. **Phases 3–4** pass the references to the implementer, which grounds layout, navigation
+   structure, content grouping, and state handling in them.
+
+With a manually designed ticket, prefer `/openflune:design --mobbin` instead — the references
+then flow through `DESIGN.md`.

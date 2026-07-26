@@ -26,6 +26,7 @@ Pass:
 - Acceptance criteria, edge cases, and error scenarios.
 - Attachment paths if relevant.
 - Design Components table and Design Tokens from the plan file's `## Design Context` section, if present.
+- The `## Design References (Mobbin)` section from the plan file, if present — the referenced patterns indicate which UI states, journeys, and interactions the tests should assert.
 
 ## Test Priorities
 

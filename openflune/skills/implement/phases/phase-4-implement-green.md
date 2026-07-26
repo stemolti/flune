@@ -24,6 +24,10 @@ Editor mode: call `batch_get`, `get_variables`, and `get_screenshot` via MCP.
 
 Pass design hierarchy, token values, and screenshot references to the implementer. If any read fails, state what is missing and proceed with `DESIGN.md` text context only.
 
+## Mobbin References
+
+Independent of `pencil.enabled`: if the plan file's front matter has `mobbin: true`, read the `## Design References (Mobbin)` section from the plan file (written when `--mobbin` was used at planning time, typically in place of a manual design) and include it verbatim in the implementer delegation below. The implementer grounds layout, navigation structure, content grouping, and state handling in the referenced patterns; the Mobbin links are provenance for the user — do not fetch them, and make no Mobbin MCP calls in this session.
+
 ## Delegation Context
 
 Pass:
@@ -33,6 +37,7 @@ Pass:
 - The failing tests and their failure output.
 - Attachment paths if relevant.
 - Full DESIGN.md only when needed for UI/component mapping.
+- The `## Design References (Mobbin)` section from the plan file, if present.
 - LSP diagnostic reminder if configured.
 
 ## Rules
