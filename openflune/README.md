@@ -89,6 +89,46 @@ claude
 /openflune:implement --mobbin 12345
 ```
 
+## Mobbin design references (`--mobbin`)
+
+[Mobbin](https://mobbin.com)'s MCP server lets the skills search 600k+ real-world, **shipped** UI screens and flows, so designs and implementations are grounded in patterns that ship in production apps instead of invented from scratch. It is fully opt-in: nothing ever connects to Mobbin unless you pass the `--mobbin` flag. Deep-dive: [`docs/mobbin.md`](docs/mobbin.md).
+
+**Prerequisite**: a **paid** Mobbin plan (Pro, Team, or Enterprise). Auth is browser-based OAuth — there is no API key.
+
+### One-time setup
+
+1. **Enable it for the project** — run `/openflune:configure` and answer **Yes** to "Mobbin design references" (only offered when a frontend framework is detected). This writes `mobbin.enabled: true` to `.claude/config.json`.
+2. **Register the MCP server** (once per machine, persists across projects):
+   ```bash
+   claude mcp add mobbin --scope user --transport http https://api.mobbin.com/mcp
+   ```
+3. **Authenticate** — in Claude Code run `/mcp`, select **mobbin**, then **Authenticate**. A browser window opens; sign in with your paid Mobbin account.
+4. **Verify** — `/mcp` should show `mobbin: connected`. Re-run `/mcp` → **Authenticate** anytime the session expires.
+
+### Usage
+
+Two entry points, same flag:
+
+```bash
+# Enrich the manual design phase — references feed the .pen design and DESIGN.md:
+/openflune:design --mobbin 42
+
+# Skip the manual design phase entirely — references feed the plan and implementation:
+/openflune:implement --mobbin 42
+/openflune:implement --mobbin add a dark mode toggle to the dashboard
+```
+
+Use `/openflune:design --mobbin` when you want a reviewed visual design first; use `/openflune:implement --mobbin` when you don't want to spend time on design but still want the best possible UI/UX grounded in real apps.
+
+### What happens with `/openflune:implement --mobbin`
+
+1. Before planning, the pipeline queries Mobbin with a context-rich query built from your ticket (or task description) and stack, then shows you the returned references — app/screen name, the pattern each illustrates, and its Mobbin link so you can review them yourself.
+2. You pick which references to adopt (multi-select, or "None").
+3. The planner grounds UI structure, navigation, and state handling in the selected patterns, and the plan file records them (`mobbin: true` + a `## Design References (Mobbin)` section).
+4. The implementation session (`/openflune:implement .plans/<file>`) inherits the references from the plan file — it makes **no Mobbin calls**, so it needs no Mobbin auth.
+
+Mobbin rate-limits at 60 requests/60s per user; the skills batch queries and back off automatically on `429`.
+
 ## Working from your phone
 
 openflune skills (`/openflune:refine`, `/openflune:implement`, `/openflune:design`) are **interactive** — they ask clarifying questions and iterate. One-shot triggers (GitHub Actions, webhooks, `claude --print`) drop conversation state after each turn, which defeats their whole design. What you need is a **persistent session** you can attach to and detach from — not a bot.
@@ -280,6 +320,13 @@ Ensure the sandbox dependencies Claude Code reports as missing are installed via
 
 ### GitHub CLI not authenticated
 Run `gh auth login` and follow the prompts. Verify with `gh auth status`.
+
+### Mobbin MCP server isn't connected or not authenticated
+`--mobbin` stops with an auth message when the server is missing or the OAuth session is invalid. Register it once per machine, then authenticate:
+```bash
+claude mcp add mobbin --scope user --transport http https://api.mobbin.com/mcp
+```
+Then `/mcp` → **mobbin** → **Authenticate** (browser sign-in; paid Mobbin plan required) until `/mcp` shows `mobbin: connected`, and re-run the command. If the flag instead reports that Mobbin isn't enabled for the project, run `/openflune:configure` and turn on **Mobbin design references** (requires a detected frontend framework).
 
 ### Agent prompts for file edit permissions
 This should not happen with the default settings. Verify `.claude/settings.json` includes `Write(*)` and `Edit(*)` in `permissions.allow`. Running `/openflune:implement` will auto-detect missing permissions and offer to fix them, or you can re-run `/openflune:configure` to regenerate settings.
