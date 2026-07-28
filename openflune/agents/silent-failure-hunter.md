@@ -15,7 +15,7 @@ description: |
   <commentary>Targeted scan for error handling patterns that generic reviewers often miss.</commentary>
   </example>
 tools: Read, Grep, Glob
-model: sonnet
+model: claude-opus-4-8
 color: magenta
 permissionMode: plan
 ---

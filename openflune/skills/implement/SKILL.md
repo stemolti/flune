@@ -4,7 +4,7 @@ description: Full implementation pipeline — plan, test, implement, review, PR
 argument-hint: [--mobbin] <ticket-id | task description> [additional context]
 user-invocable: true
 disable-model-invocation: true
-model: sonnet
+model: claude-opus-4-8
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Task, AskUserQuestion, mcp__context7, mcp__pencil__batch_get, mcp__pencil__get_variables, mcp__pencil__get_screenshot, mcp__pencil__snapshot_layout, mcp__pencil__get_editor_state, mcp__mobbin
 ---
 

@@ -15,7 +15,7 @@ description: |
   <commentary>Targeted duplication analysis on a specific layer or module helps find consolidation opportunities.</commentary>
   </example>
 tools: Read, Grep, Glob
-model: sonnet
+model: claude-opus-4-8
 color: magenta
 permissionMode: plan
 ---

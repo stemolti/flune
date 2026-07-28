@@ -15,7 +15,7 @@ description: |
   <commentary>New endpoints accepting user input are high-priority targets for security review.</commentary>
   </example>
 tools: Read, Grep, Glob
-model: sonnet
+model: claude-opus-5
 color: red
 permissionMode: plan
 ---

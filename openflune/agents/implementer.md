@@ -21,7 +21,7 @@ description: |
   <commentary>Implementer handles fixes identified by review agents.</commentary>
   </example>
 tools: Read, Write, Edit, Glob, Grep, Bash, mcp__context7
-model: sonnet
+model: claude-opus-5
 color: green
 permissionMode: acceptEdits
 ---

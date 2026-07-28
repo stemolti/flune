@@ -4,6 +4,7 @@ description: Configure the openflune workflow plugin for this project
 argument-hint: [additional context]
 user-invocable: true
 disable-model-invocation: true
+model: claude-opus-4-8
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion
 ---
 

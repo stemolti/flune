@@ -4,6 +4,7 @@ description: Review code for security issues, quality, and silent failures — s
 argument-hint: [<pr-number> | <file-paths>]
 user-invocable: true
 disable-model-invocation: true
+model: claude-opus-4-8
 allowed-tools: Read, Bash, Glob, Grep, Task, AskUserQuestion
 ---
 

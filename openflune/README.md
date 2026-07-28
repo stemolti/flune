@@ -288,14 +288,28 @@ The plugin uses specialized agents with isolated contexts:
 
 | Agent | Role | Model | Permission Mode |
 |-------|------|-------|-----------------|
-| **context-gatherer** | Bundles ticket, design, and project context into a file for the planner | sonnet | acceptEdits |
-| **planner** | Analyzes tickets, produces implementation plans | inherit | plan (read-only) |
-| **implementer** | TDD: writes tests first, then implementation | inherit | acceptEdits |
-| **security-reviewer** | OWASP-focused security review | sonnet | plan (read-only) |
-| **code-reviewer** | PR-style quality review | sonnet | plan (read-only) |
-| **lessons-collector** | Routes genuine mistakes to `docs/<topic>.md` or `CLAUDE.md` | haiku | acceptEdits |
+| **context-gatherer** | Bundles ticket, design, and project context into a file for the planner | `claude-opus-4-8` | acceptEdits |
+| **planner** | Analyzes tickets, produces implementation plans | `claude-fable-5` | plan (read-only) |
+| **implementer** | TDD: writes tests first, then implementation | `claude-opus-5` | acceptEdits |
+| **security-reviewer** | OWASP-focused security review | `claude-opus-5` | plan (read-only) |
+| **code-reviewer** | PR-style quality review | `claude-opus-5` | plan (read-only) |
+| **silent-failure-hunter** | Swallowed errors, empty catch blocks, silent fallbacks | `claude-opus-4-8` | plan (read-only) |
+| **security-analyzer** | Standalone OWASP audit (`/openflune:refactor`) | `claude-opus-5` | plan (read-only) |
+| **duplication-analyzer** | Copy-paste and extraction opportunities | `claude-opus-4-8` | plan (read-only) |
+| **structure-analyzer** | File sizes, test organization, module splits | `claude-opus-4-8` | plan (read-only) |
+| **lessons-collector** | Routes genuine mistakes to `docs/<topic>.md` or `CLAUDE.md` | `claude-opus-4-8` | acceptEdits |
 
-**Model tiering**: Opus where judgment is concentrated — `/openflune:refine` and `/openflune:design` pin `model: opus` because scope, acceptance criteria, splits, and UX structure drive everything downstream. Sonnet for pipeline orchestration and implementation (`/openflune:implement` pins `model: sonnet`). Haiku for mechanical collection (lessons-collector). These pins are visible in each skill's frontmatter and override the session model for that skill only.
+**Model tiering**: pins are exact model IDs, not aliases, so a plan-level alias remap can't silently move a step to a different tier. Three tiers:
+
+| Tier | Where | Why |
+|------|-------|-----|
+| `claude-fable-5` | **planner only** | The plan gates every downstream phase and a bad one wastes the whole pipeline. One read-only call per ticket keeps the footprint minimal — this is the only step that spends the Fable quota. |
+| `claude-opus-5` | implementer, code-reviewer, security-reviewer, security-analyzer, `/openflune:design`, `/openflune:refine`, `/openflune:address-review` | Open-ended judgment and code generation: TDD loops, review findings, scope and acceptance criteria, UX structure. |
+| `claude-opus-4-8` | context-gatherer, silent-failure-hunter, duplication-analyzer, structure-analyzer, lessons-collector, `/openflune:implement`, `/openflune:refactor`, `/openflune:review`, `/openflune:sync`, `/openflune:configure` | Orchestration and pattern-matching: phase sequencing, bundling context, grep-shaped scans, git mechanics. Same API pricing as Opus 5, lower latency, no capability the step actually needs. |
+
+These pins live in each agent's and skill's frontmatter and override the session model for that agent or skill only. Reference skills (`testing`, `worktrees`, `shell-rules`, `stack-*`, `subagent-safety`, `attachments`) carry no pin — they are context loaded into whichever agent is already running.
+
+> **`CLAUDE_CODE_SUBAGENT_MODEL` wins over agent pins.** If you answered **Yes** to "Pin subagents to 200K" during `/openflune:configure`, that env var forces every `Task` subagent onto the pinned model and the per-agent `model:` values above have no effect. See [Subagent reviews blocked](#subagent-reviews-blocked-usage-credits-required-for-1m-context).
 
 External integrations use the `gh` CLI rather than MCP servers, keeping permissions simple and avoiding token overhead. Optional MCP servers: Context7 (live documentation lookup), Pencil (design file creation via `/openflune:design`), and Mobbin (real-world UI references via `--mobbin` on `/openflune:design` or `/openflune:implement` — a paid, OAuth-gated remote server that is fully opt-in and never bundled). See [`docs/mobbin.md`](docs/mobbin.md).
 
@@ -334,7 +348,7 @@ This should not happen with the default settings. Verify `.claude/settings.json`
 ### Subagent reviews blocked: "Usage credits required for 1M context"
 The pipeline ran inline and skipped the dedicated reviewer agents (security-reviewer, code-reviewer, silent-failure-hunter). This happens when your session runs a **1M-context** model (model ID ends in `[1m]`, e.g. `claude-opus-4-8[1m]`).
 
-The `[1m]` flag is session-level: every subagent inherits it but **not** the session's extra-usage entitlement, so `Task` delegation is gated — even with a `model: sonnet` override and even with usage credits enabled (Claude Code bug [#51060](https://github.com/anthropics/claude-code/issues/51060) / [#57249](https://github.com/anthropics/claude-code/issues/57249)). openflune's reviewers need the standard 200K context.
+The `[1m]` flag is session-level: every subagent inherits it but **not** the session's extra-usage entitlement, so `Task` delegation is gated — even with a per-agent `model:` override and even with usage credits enabled (Claude Code bug [#51060](https://github.com/anthropics/claude-code/issues/51060) / [#57249](https://github.com/anthropics/claude-code/issues/57249)). openflune's reviewers need the standard 200K context.
 
 - **Permanently (keeps your main session on 1M):** run `/openflune:configure` and answer **Yes** to "Pin subagents to 200K" — it sets `CLAUDE_CODE_SUBAGENT_MODEL=claude-sonnet-4-6` in `~/.claude/settings.json` so every subagent runs on Sonnet 200K while your main session keeps 1M. Restart for it to take effect. (Pin Sonnet, not Opus: Opus auto-upgrades to 1M on Max/Team/Enterprise plans and would re-trigger the gate.)
 - **Now (this session), or if pinning doesn't clear the gate:** run `/model sonnet` to put the whole session on 200K, then re-invoke the skill. Note `/model opus` will *not* drop you to 200K on a plan that auto-upgrades Opus to 1M.
