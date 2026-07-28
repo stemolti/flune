@@ -15,7 +15,7 @@ description: |
   <commentary>Empty output is the expected result for most sessions.</commentary>
   </example>
 tools: Read, Write, Edit, Grep, Glob
-model: haiku
+model: claude-opus-4-8
 color: cyan
 permissionMode: acceptEdits
 ---

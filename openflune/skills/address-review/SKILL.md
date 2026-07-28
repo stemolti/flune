@@ -4,6 +4,7 @@ description: Address PR review comments — fetch, evaluate, fix, reply, push, r
 argument-hint: <pr-number> [additional context]
 disable-model-invocation: true
 user-invocable: true
+model: claude-opus-5
 allowed-tools: Read, Write, Edit, Bash, Glob, Grep, Task, AskUserQuestion
 ---
 

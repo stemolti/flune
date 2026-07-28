@@ -15,7 +15,7 @@ description: |
   <commentary>API layers are high-priority targets — the agent uses Context7 to compare against official security recommendations.</commentary>
   </example>
 tools: Read, Grep, Glob, mcp__context7__resolve-library-id, mcp__context7__query-docs
-model: sonnet
+model: claude-opus-5
 color: red
 permissionMode: plan
 ---

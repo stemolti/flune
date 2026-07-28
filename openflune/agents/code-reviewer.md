@@ -15,7 +15,7 @@ description: |
   <commentary>The implementation pipeline has reached the code review phase (Phase 7).</commentary>
   </example>
 tools: Read, Grep, Glob, Bash
-model: sonnet
+model: claude-opus-5
 color: yellow
 permissionMode: plan
 ---

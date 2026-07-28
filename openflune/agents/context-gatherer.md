@@ -15,7 +15,7 @@ description: |
   <commentary>Even without a ticket, design and per-project context can be bundled outside the main context.</commentary>
   </example>
 tools: Read, Write, Grep, Glob, Bash
-model: sonnet
+model: claude-opus-4-8
 color: cyan
 permissionMode: acceptEdits
 ---

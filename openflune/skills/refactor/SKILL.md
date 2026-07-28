@@ -4,6 +4,7 @@ description: Analyze codebase for duplication, security issues, and file structu
 argument-hint: [scope: files/dirs/glob] [additional context]
 disable-model-invocation: true
 user-invocable: true
+model: claude-opus-4-8
 allowed-tools: Read, Bash, Glob, Grep, Task, AskUserQuestion
 ---
 

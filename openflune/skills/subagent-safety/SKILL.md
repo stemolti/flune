@@ -27,7 +27,7 @@ Subagents (Task tool) cannot surface permission prompts, authentication errors, 
 
 Subagents don't inherit a 1M-context session's extra-usage entitlement, so when the
 main session runs a 1M model, `Task` delegation can fail with "Usage credits required
-for 1M context" — even with a `model: sonnet` override (Claude Code bug #51060 / #57249).
+for 1M context" — even with a per-agent `model:` override (Claude Code bug #51060 / #57249).
 openflune's fix is to pin every subagent to a 200K model via `CLAUDE_CODE_SUBAGENT_MODEL`.
 
 You cannot reliably determine your own session model or context size from inside the

@@ -4,6 +4,7 @@ description: Sync main branch, rebase active worktrees, and clean up merged bran
 argument-hint: [additional context]
 user-invocable: true
 disable-model-invocation: true
+model: claude-opus-4-8
 allowed-tools: Bash, Read
 ---
 
