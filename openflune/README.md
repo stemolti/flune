@@ -58,7 +58,13 @@ claude plugin marketplace add stemolti/flune
 claude plugin install openflune
 ```
 
-To update later: `claude plugin update openflune`
+To update later, qualify the plugin with its marketplace — `claude plugin update` does not resolve a bare plugin name and fails with `Plugin "openflune" not found`:
+
+```bash
+claude plugin update openflune@flune
+```
+
+(`claude plugin install` does resolve a bare name by searching every registered marketplace, which is why the install command above needs no qualifier.)
 
 ### Manual (per-session)
 
