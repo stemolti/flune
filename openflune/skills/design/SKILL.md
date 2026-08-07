@@ -1,11 +1,11 @@
 ---
 name: design
-description: Interactive design reasoning and .pen file creation using Pencil
-argument-hint: [--mobbin] <ticket-id | design description> [additional context]
+description: Interactive design reasoning and design file creation using Pencil (.pen, default) or Figma (--fig)
+argument-hint: [--mobbin] [--fig] <ticket-id | design description> [additional context]
 user-invocable: true
 disable-model-invocation: true
 model: claude-opus-5
-allowed-tools: Read, Write, Bash, Glob, Grep, AskUserQuestion, WebFetch, mcp__pencil__get_editor_state, mcp__pencil__get_guidelines, mcp__pencil__batch_get, mcp__pencil__batch_design, mcp__pencil__get_screenshot, mcp__pencil__export_nodes, mcp__pencil__find_empty_space_on_canvas, mcp__pencil__snapshot_layout, mcp__pencil__open_document, mcp__pencil__get_variables, mcp__pencil__set_variables, mcp__pencil__replace_all_matching_properties, mcp__pencil__search_all_unique_properties, mcp__mobbin
+allowed-tools: Read, Write, Bash, Glob, Grep, AskUserQuestion, WebFetch, Task, mcp__pencil__get_editor_state, mcp__pencil__get_guidelines, mcp__pencil__batch_get, mcp__pencil__batch_design, mcp__pencil__get_screenshot, mcp__pencil__export_nodes, mcp__pencil__find_empty_space_on_canvas, mcp__pencil__snapshot_layout, mcp__pencil__open_document, mcp__pencil__get_variables, mcp__pencil__set_variables, mcp__pencil__replace_all_matching_properties, mcp__pencil__search_all_unique_properties, mcp__mobbin, mcp__figma
 ---
 
 <!-- Architecture note: openflune orchestrates Pencil via `pencil interactive` CLI (openflune-driven model).
@@ -25,6 +25,25 @@ allowed-tools: Read, Write, Bash, Glob, Grep, AskUserQuestion, WebFetch, mcp__pe
      (set by `/openflune:configure`). The server is granted at server level (`mcp__mobbin` in
      allowed-tools) because Mobbin does not publish stable tool names — tools are discovered at
      runtime. See `docs/mobbin.md` for setup, auth, rate limits, and prompting best practices. -->
+
+<!-- Figma note: the optional `--fig` flag routes the entire command to the Figma design engine
+     (skills/design-figma/SKILL.md). Figma's .fig format is a proprietary binary that cannot be
+     authored outside Figma, so the Figma engine produces Figma-NATIVE deliverables (Tokens Studio
+     JSON, importable SVG frames, interaction specs) and drives a live Figma bridge MCP when one
+     is configured. See docs/figma.md for capabilities, limits, and setup. The `mcp__figma` grant
+     is server-level for the same reason as Mobbin: bridge servers do not publish stable tool
+     names — they are discovered at runtime. -->
+
+## Engine Selection (runs before Phase 0)
+
+Scan `$ARGUMENTS` for a `--fig` token (any position, whitespace-delimited).
+
+- **If present** → strip every `--fig` token, set `$DESIGN_ENGINE = "figma"`, read
+  `${CLAUDE_PLUGIN_ROOT}/skills/design-figma/SKILL.md`, and follow **that skill** with the
+  remaining `$ARGUMENTS` (the `--mobbin` flag keeps the exact semantics defined in this file;
+  the Figma skill references them). Do **not** run any Pencil phase below — Phase 0 onward in
+  this file is the Pencil engine.
+- **If absent** → set `$DESIGN_ENGINE = "pencil"` and continue with Phase 0 below, unchanged.
 
 ## Phase 0 — Context Loading
 

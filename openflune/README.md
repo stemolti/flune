@@ -8,7 +8,7 @@ Ticket refinement and automated implementation pipeline for GitHub.
 |-------|-------------|
 | `/openflune:configure` | Interactive project setup: tech stack, sandboxing, MCP/LSP servers |
 | `/openflune:refine <ticket-id>` | Iterative ticket refinement until it's ready for planning |
-| `/openflune:design [--mobbin] <ticket-id \| description>` | Interactive design reasoning and `.pen` file creation using Pencil. Add `--mobbin` to pull real-world UI references from Mobbin first (paid Mobbin plan; opt-in) |
+| `/openflune:design [--mobbin] [--fig] <ticket-id \| description>` | Interactive design reasoning and design file creation — Pencil (`.pen`, default) or Figma with `--fig` (Figma-native package: Tokens Studio JSON, importable frames, interaction specs; live Figma editing when a bridge MCP is configured — see [`docs/figma.md`](docs/figma.md)). Add `--mobbin` to pull real-world UI references from Mobbin first (paid Mobbin plan; opt-in) |
 | `/openflune:implement [--mobbin] <ticket-id \| description>` | Full pipeline: plan, test, implement, refactor, security review, code review, lessons, PR. Add `--mobbin` to skip the manual design phase but ground UI work in real-world Mobbin references (paid Mobbin plan; opt-in) |
 | `/openflune:address-review <pr-number>` | Address PR review comments — fetch, evaluate, fix, reply, push, re-request review |
 | `/openflune:sync` | Pull latest main, rebase active worktrees, prune stale remotes, clean up merged branches |
@@ -88,6 +88,8 @@ claude
 /openflune:design 12345
 #    ...or ground it in real-world UI references first (paid Mobbin plan, opt-in):
 /openflune:design --mobbin 12345
+#    ...or design with the Figma engine instead of Pencil (combinable with --mobbin):
+/openflune:design --mobbin 12345 --fig
 
 # 5. Implement a ticket
 /openflune:implement 12345

@@ -15,5 +15,6 @@ GitHub Issues for tracking. GitHub for code and PRs.
 On-demand topic docs live at `docs/`:
 - `docs/git-workflow.md` — branching, commits, PRs, versioning
 - `docs/mobbin.md` — Mobbin design-reference MCP: setup, auth, rate limits, prompting (read before working on any `--mobbin` flow)
+- `docs/figma.md` — Figma design engine: .fig constraints, integration levels, bridge setup, config schema (read before working on any `--fig` flow)
 
 `.claude/rules/` is reserved for files explicitly `@`-imported by this CLAUDE.md (auto-loaded at session start). It is not used today.
